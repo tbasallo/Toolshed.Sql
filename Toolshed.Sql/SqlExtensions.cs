@@ -31,7 +31,7 @@ public static class SqlExtensions
     /// <param name="table"></param>
     /// <param name="ignoreColumnAttributes"></param>
     /// <param name="ignoreColumns"></param>
-    public static void CheckColumns<T>(this SqlConnection connection, string table, Type[] ignoreColumnAttributes = null, string[] ignoreColumns = null)
+    public static void CheckColumns<T>(this SqlConnection connection, string table, Type[]? ignoreColumnAttributes = null, string[]? ignoreColumns = null)
     {
 
         var list = new List<string>();

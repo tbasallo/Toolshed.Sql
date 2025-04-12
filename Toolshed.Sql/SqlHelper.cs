@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+
 using FastMember;
+
 using Microsoft.Data.SqlClient;
 
 namespace Toolshed.Sql;
@@ -18,7 +20,7 @@ public static class SqlHelper
     public static int? CommandTimeout { get; set; }
 
 
-    public static void LogToConsoleStringLengths<T>(List<T> data, bool stopWhenDone = true, Type[] ignoreColumnAttributes = null)
+    public static void LogToConsoleStringLengths<T>(List<T> data, bool stopWhenDone = true, Type[]? ignoreColumnAttributes = null)
     {
         foreach (var item in typeof(T).GetProperties())
         {
@@ -30,7 +32,7 @@ public static class SqlHelper
                     continue;
                 }
             }
-            
+
             if (item.CustomAttributes.Any(x => x.AttributeType == typeof(IgnoreBulkImportAttribute)))
             {
                 continue;
@@ -41,8 +43,7 @@ public static class SqlHelper
                 var longest = 0;
                 for (int i = 0; i < data.Count; i++)
                 {
-                    var l = (string)item.GetValue(data[i]);
-                    if (l != null)
+                    if (item.GetValue(data[i]) is string l)
                     {
                         longest = longest > l.Length ? longest : l.Length;
                     }
@@ -60,15 +61,15 @@ public static class SqlHelper
     }
 
 
-    public static void BulkInsert<T>(SqlConnection connection, string tableName, IEnumerable<T> data, int batchSize = 5000, int commandTimeout = 3600, Type[] ignoreColumnAttributes = null)
+    public static void BulkInsert<T>(SqlConnection connection, string tableName, IEnumerable<T> data, int batchSize = 5000, int commandTimeout = 3600, Type[]? ignoreColumnAttributes = null)
     {
         using var bc = new SqlBulkCopy(connection)
         {
             BatchSize = batchSize,
             BulkCopyTimeout = commandTimeout,
             DestinationTableName = tableName,
-            EnableStreaming = true                 
-        };            
+            EnableStreaming = true
+        };
 
         foreach (var item in typeof(T).GetProperties())
         {
@@ -92,7 +93,7 @@ public static class SqlHelper
 
         bc.WriteToServer(reader);
     }
-    public static void BulkInsert<T>(SqlConnection connection, SqlTransaction sqlTransaction, string tableName, IEnumerable<T> data, int batchSize = 5000, int commandTimeout = 3600, Type[] ignoreColumnAttributes = null)
+    public static void BulkInsert<T>(SqlConnection connection, SqlTransaction sqlTransaction, string tableName, IEnumerable<T> data, int batchSize = 5000, int commandTimeout = 3600, Type[]? ignoreColumnAttributes = null)
     {
         using var bc = new SqlBulkCopy(connection, SqlBulkCopyOptions.TableLock, sqlTransaction)
         {
@@ -125,7 +126,7 @@ public static class SqlHelper
         bc.WriteToServer(reader);
     }
 
-    public static async Task BulkInsertAsync<T>(SqlConnection connection, string tableName, List<T> data, int batchSize = 5000, int commandTimeout = 3600, Type[] ignoreColumnAttributes = null)
+    public static async Task BulkInsertAsync<T>(SqlConnection connection, string tableName, List<T> data, int batchSize = 5000, int commandTimeout = 3600, Type[]? ignoreColumnAttributes = null)
     {
         using var bc = new SqlBulkCopy(connection)
         {
@@ -157,7 +158,7 @@ public static class SqlHelper
 
         await bc.WriteToServerAsync(reader);
     }
-    public static async Task BulkInsertAsync<T>(SqlConnection connection, SqlTransaction sqlTransaction, string tableName, List<T> data, int batchSize = 5000, int commandTimeout = 3600, Type[] ignoreColumnAttributes = null)
+    public static async Task BulkInsertAsync<T>(SqlConnection connection, SqlTransaction sqlTransaction, string tableName, List<T> data, int batchSize = 5000, int commandTimeout = 3600, Type[]? ignoreColumnAttributes = null)
     {
         using var bc = new SqlBulkCopy(connection, SqlBulkCopyOptions.TableLock, sqlTransaction)
         {
@@ -189,7 +190,7 @@ public static class SqlHelper
 
         await bc.WriteToServerAsync(reader);
     }
-    public static async Task BulkInsertAsync<T>(SqlConnection connection, string tableName, ObjectReader objectReader, int batchSize = 5000, int commandTimeout = 3600, Type[] ignoreColumnAttributes = null, string[] ignoreColumns = null)
+    public static async Task BulkInsertAsync<T>(SqlConnection connection, string tableName, ObjectReader objectReader, int batchSize = 5000, int commandTimeout = 3600, Type[]? ignoreColumnAttributes = null, string[]? ignoreColumns = null)
     {
         using var bc = new SqlBulkCopy(connection)
         {
@@ -227,7 +228,7 @@ public static class SqlHelper
 
         await bc.WriteToServerAsync(objectReader);
     }
-    public static async Task BulkInsertAsync<T>(SqlConnection connection, SqlTransaction sqlTransaction, string tableName, ObjectReader objectReader, int batchSize = 5000, int commandTimeout = 3600, Type[] ignoreColumnAttributes = null, string[] ignoreColumns = null)
+    public static async Task BulkInsertAsync<T>(SqlConnection connection, SqlTransaction sqlTransaction, string tableName, ObjectReader objectReader, int batchSize = 5000, int commandTimeout = 3600, Type[]? ignoreColumnAttributes = null, string[]? ignoreColumns = null)
     {
         using var bc = new SqlBulkCopy(connection, SqlBulkCopyOptions.TableLock, sqlTransaction)
         {
@@ -252,9 +253,9 @@ public static class SqlHelper
                 }
             }
 
-            if(ignoreColumns != null)
+            if (ignoreColumns != null)
             {
-                if(ignoreColumns.Contains(item.Name))
+                if (ignoreColumns.Contains(item.Name))
                 {
                     continue;
                 }
@@ -267,7 +268,7 @@ public static class SqlHelper
     }
 
 
-    
+
 
     public static void UseDatabase(this SqlConnection connection, string databaseName)
     {
@@ -278,69 +279,87 @@ public static class SqlHelper
         connection.ChangeDatabase(databaseName);
     }
 
-    public static int TruncateTable(string tableName, SqlConnection connection, SqlTransaction transaction = null)
+    public static int TruncateTable(string tableName, SqlConnection connection, SqlTransaction? transaction = null)
     {
         return ExecuteNonQuery("TRUNCATE TABLE " + tableName, connection, transaction);
     }
-    public async static Task<int> TruncateTableAsync(string tableName, SqlConnection connection, SqlTransaction transaction = null)
+    public async static Task<int> TruncateTableAsync(string tableName, SqlConnection connection, SqlTransaction? transaction = null)
     {
         return await ExecuteNonQueryAsync("TRUNCATE TABLE " + tableName, connection, transaction);
     }
 
-    public static int DropExistingTable(string tableName, SqlConnection connection, SqlTransaction transaction = null)
+    public static int DropExistingTable(string tableName, SqlConnection connection, SqlTransaction? transaction = null)
     {
         return ExecuteNonQuery(string.Format("IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'{0}') AND type in (N'U')) DROP TABLE {0}", tableName), connection, transaction);
-    }        
+    }
 
-    public static int RenameTable(string oldName, string newName, SqlConnection connection, SqlTransaction transaction = null)
+    public static int RenameTable(string oldName, string newName, SqlConnection connection, SqlTransaction? transaction = null)
     {
         return ExecuteNonQuery(string.Format("EXECUTE sp_rename N'{0}', N'{1}', 'OBJECT'", oldName, newName), connection, transaction);
     }
 
 
 
-    public static T ExecuteScalar<T>(string sql, SqlConnection connection)
+    public static T? ExecuteScalar<T>(string sql, SqlConnection connection)
     {
-        using (SqlCommand command = new SqlCommand(sql, connection))
+        using SqlCommand command = new SqlCommand(sql, connection);
+        command.CommandType = CommandType.Text;
+        command.CommandTimeout = CommandTimeout.GetValueOrDefault(command.CommandTimeout);
+        var result = command.ExecuteScalar();
+        if (result is null)
         {
-            command.CommandType = CommandType.Text;
-            command.CommandTimeout = CommandTimeout.GetValueOrDefault(command.CommandTimeout);
-            return (T)command.ExecuteScalar();
+            return default;
         }
+
+        return (T)result;
     }
-    public async static Task<T> ExecuteScalarAsync<T>(string sql, SqlConnection connection)
+    public async static Task<T?> ExecuteScalarAsync<T>(string sql, SqlConnection connection)
     {
-        using (SqlCommand command = new SqlCommand(sql, connection))
+        using SqlCommand command = new SqlCommand(sql, connection);
+        command.CommandType = CommandType.Text;
+        command.CommandTimeout = CommandTimeout.GetValueOrDefault(command.CommandTimeout);
+        var result = await command.ExecuteScalarAsync();
+        if (result is null)
         {
-            command.CommandType = CommandType.Text;
-            command.CommandTimeout = CommandTimeout.GetValueOrDefault(command.CommandTimeout);
-            return (T)await command.ExecuteScalarAsync();
+            return default;
         }
+
+        return (T)result;
     }
 
-    public static T ExecuteScalar<T>(string sql, SqlConnection connection, SqlTransaction transaction)
+    public static T? ExecuteScalar<T>(string sql, SqlConnection connection, SqlTransaction transaction)
     {
-        using (SqlCommand command = new SqlCommand(sql, connection, transaction))
+        using SqlCommand command = new SqlCommand(sql, connection, transaction);
+        command.CommandType = CommandType.Text;
+        command.CommandTimeout = CommandTimeout.GetValueOrDefault(command.CommandTimeout);
+        var result = command.ExecuteScalar();
+
+        if (result is null)
         {
-            command.CommandType = CommandType.Text;
-            command.CommandTimeout = CommandTimeout.GetValueOrDefault(command.CommandTimeout);
-            return (T)command.ExecuteScalar();
+            return default;
         }
+
+        return (T)result;
     }
-    public async static Task<T> ExecuteScalarAsync<T>(string sql, SqlConnection connection, SqlTransaction transaction)
+    public async static Task<T?> ExecuteScalarAsync<T>(string sql, SqlConnection connection, SqlTransaction transaction)
     {
-        using (SqlCommand command = new SqlCommand(sql, connection, transaction))
+        using SqlCommand command = new SqlCommand(sql, connection, transaction);
+        command.CommandType = CommandType.Text;
+        command.CommandTimeout = CommandTimeout.GetValueOrDefault(command.CommandTimeout);
+        var result = await command.ExecuteScalarAsync();
+
+        if (result is null)
         {
-            command.CommandType = CommandType.Text;
-            command.CommandTimeout = CommandTimeout.GetValueOrDefault(command.CommandTimeout);
-            return (T)await command.ExecuteScalarAsync();
+            return default;
         }
+
+        return (T)result;
     }
 
 
-    public static int ExecuteNonQuery(string sql, SqlConnection connection, SqlTransaction transaction = null, int? commandTimeout = null)
+    public static int ExecuteNonQuery(string sql, SqlConnection connection, SqlTransaction? transaction = null, int? commandTimeout = null)
     {
-        if (transaction == null)
+        if (transaction is null)
         {
             return ExecuteNonQuery(sql, connection, CommandType.Text, commandTimeout);
         }
@@ -348,61 +367,61 @@ public static class SqlHelper
     }
     public static int ExecuteNonQuery(string sql, SqlConnection connection, CommandType commandType, int? commandTimeout = null)
     {
-			using SqlCommand command = new SqlCommand(sql, connection);
-			command.CommandType = commandType;
-			if (commandTimeout.HasValue || CommandTimeout.HasValue)
-			{
-				command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
-			}
-			return command.ExecuteNonQuery();
-		}
+        using SqlCommand command = new SqlCommand(sql, connection);
+        command.CommandType = commandType;
+        if (commandTimeout.HasValue || CommandTimeout.HasValue)
+        {
+            command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
+        }
+        return command.ExecuteNonQuery();
+    }
     public static int ExecuteNonQuery(string sql, SqlConnection connection, SqlTransaction transaction, CommandType commandType, int? commandTimeout = null)
     {
-			using SqlCommand command = new SqlCommand(sql, connection, transaction);
-			command.CommandType = commandType;
-			if (commandTimeout.HasValue || CommandTimeout.HasValue)
-			{
-				command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
-			}
-			return command.ExecuteNonQuery();
-		}
+        using SqlCommand command = new SqlCommand(sql, connection, transaction);
+        command.CommandType = commandType;
+        if (commandTimeout.HasValue || CommandTimeout.HasValue)
+        {
+            command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
+        }
+        return command.ExecuteNonQuery();
+    }
     public static int ExecuteNonQuery(string sql, SqlConnection connection, SqlParameter[] parameters, CommandType commandType, int? commandTimeout = null)
     {
-			using SqlCommand command = new SqlCommand(sql, connection);
-			if (commandTimeout.HasValue || CommandTimeout.HasValue)
-			{
-				command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
-			}
-			command.CommandType = commandType;
-			command.CommandText = sql;
-			command.Parameters.AddRange(parameters);
-			return command.ExecuteNonQuery();
-		}
+        using SqlCommand command = new SqlCommand(sql, connection);
+        if (commandTimeout.HasValue || CommandTimeout.HasValue)
+        {
+            command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
+        }
+        command.CommandType = commandType;
+        command.CommandText = sql;
+        command.Parameters.AddRange(parameters);
+        return command.ExecuteNonQuery();
+    }
     public static int ExecuteNonQuery(string sql, SqlConnection connection, SqlTransaction transaction, SqlParameter[] parameters, CommandType commandType, int? commandTimeout = null)
     {
-			using SqlCommand command = new SqlCommand(sql, connection, transaction);
-			if (commandTimeout.HasValue || CommandTimeout.HasValue)
-			{
-				command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
-			}
-			command.CommandType = commandType;
-			command.CommandText = sql;
-			command.Parameters.AddRange(parameters);
-			return command.ExecuteNonQuery();
-		}
+        using SqlCommand command = new SqlCommand(sql, connection, transaction);
+        if (commandTimeout.HasValue || CommandTimeout.HasValue)
+        {
+            command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
+        }
+        command.CommandType = commandType;
+        command.CommandText = sql;
+        command.Parameters.AddRange(parameters);
+        return command.ExecuteNonQuery();
+    }
 
 
     public async static Task<int> ExecuteNonQueryAsync(string sql, SqlConnection connection, CommandType commandType, int? commandTimeout = null)
     {
-			using SqlCommand command = new SqlCommand(sql, connection);
-			if (commandTimeout.HasValue || CommandTimeout.HasValue)
-			{
-				command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
-			}
-			command.CommandType = commandType;
-			return await command.ExecuteNonQueryAsync();
-		}
-    public async static Task<int> ExecuteNonQueryAsync(string sql, SqlConnection connection, SqlTransaction transaction = null, int? commandTimeout = null)
+        using SqlCommand command = new SqlCommand(sql, connection);
+        if (commandTimeout.HasValue || CommandTimeout.HasValue)
+        {
+            command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
+        }
+        command.CommandType = commandType;
+        return await command.ExecuteNonQueryAsync();
+    }
+    public async static Task<int> ExecuteNonQueryAsync(string sql, SqlConnection connection, SqlTransaction? transaction = null, int? commandTimeout = null)
     {
         if (transaction == null)
         {
@@ -412,42 +431,42 @@ public static class SqlHelper
     }
     public async static Task<int> ExecuteNonQueryAsync(string sql, SqlConnection connection, SqlTransaction transaction, CommandType commandType, int? commandTimeout = null)
     {
-			using SqlCommand command = new SqlCommand(sql, connection, transaction);
-			if (commandTimeout.HasValue || CommandTimeout.HasValue)
-			{
-				command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
-			}
-			command.CommandType = commandType;
-			return await command.ExecuteNonQueryAsync();
-		}
+        using SqlCommand command = new SqlCommand(sql, connection, transaction);
+        if (commandTimeout.HasValue || CommandTimeout.HasValue)
+        {
+            command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
+        }
+        command.CommandType = commandType;
+        return await command.ExecuteNonQueryAsync();
+    }
     public async static Task<int> ExecuteNonQueryAsync(string sql, SqlConnection connection, SqlParameter[] parameters, CommandType commandType, int? commandTimeout = null)
     {
-			using SqlCommand command = new SqlCommand(sql, connection);
-			if (commandTimeout.HasValue || CommandTimeout.HasValue)
-			{
-				command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
-			}
-			command.CommandType = commandType;
-			command.CommandText = sql;
-			command.Parameters.AddRange(parameters);
-			return await command.ExecuteNonQueryAsync();
-		}
+        using SqlCommand command = new SqlCommand(sql, connection);
+        if (commandTimeout.HasValue || CommandTimeout.HasValue)
+        {
+            command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
+        }
+        command.CommandType = commandType;
+        command.CommandText = sql;
+        command.Parameters.AddRange(parameters);
+        return await command.ExecuteNonQueryAsync();
+    }
     public async static Task<int> ExecuteNonQueryAsync(string sql, SqlConnection connection, SqlTransaction transaction, SqlParameter[] parameters, CommandType commandType, int? commandTimeout = null)
     {
-			using SqlCommand command = new SqlCommand(sql, connection, transaction);
-			if (commandTimeout.HasValue || CommandTimeout.HasValue)
-			{
-				command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
-			}
-			command.CommandType = commandType;
-			command.CommandText = sql;
-			command.Parameters.AddRange(parameters);
-			return await command.ExecuteNonQueryAsync();
-		}
+        using SqlCommand command = new SqlCommand(sql, connection, transaction);
+        if (commandTimeout.HasValue || CommandTimeout.HasValue)
+        {
+            command.CommandTimeout = commandTimeout.GetValueOrDefault(CommandTimeout.GetValueOrDefault(command.CommandTimeout));
+        }
+        command.CommandType = commandType;
+        command.CommandText = sql;
+        command.Parameters.AddRange(parameters);
+        return await command.ExecuteNonQueryAsync();
+    }
 
     /// <summary>
     /// This checks if a given statement is true. It checks for a return value of 1 or 0 NOT a null value.
-    /// You shoudl use EXISTS to minimize the amount of work that SQL does. Something like:
+    /// You should use EXISTS to minimize the amount of work that SQL does. Something like:
     /// SELECT CASE WHEN EXISTS(SELECT 1 FROM your.table WHERE yourCriteria = 'something') THEN 1 ELSE 0 END");
     /// </summary>
     /// <param name="connectionString"></param>
@@ -465,7 +484,9 @@ public static class SqlHelper
         {
             command.CommandTimeout = CommandTimeout.GetValueOrDefault();
         }
-        return (int)await command.ExecuteScalarAsync() == 1;
+
+        var result = await command.ExecuteScalarAsync();
+        return result is not null && (int)result == 1;
     }
 
 }
