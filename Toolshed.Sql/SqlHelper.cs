@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Data;
 
 using FastMember;
 
@@ -281,16 +277,16 @@ public static class SqlHelper
 
     public static int TruncateTable(string tableName, SqlConnection connection, SqlTransaction? transaction = null)
     {
-        return ExecuteNonQuery("TRUNCATE TABLE " + tableName, connection, transaction);
+        return ExecuteNonQuery($"IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'{tableName}') AND type in (N'U')) TRUNCATE TABLE {tableName}", connection, transaction);
     }
     public async static Task<int> TruncateTableAsync(string tableName, SqlConnection connection, SqlTransaction? transaction = null)
     {
-        return await ExecuteNonQueryAsync("TRUNCATE TABLE " + tableName, connection, transaction);
+        return await ExecuteNonQueryAsync($"IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'{tableName}') AND type in (N'U')) TRUNCATE TABLE {tableName}", connection, transaction);
     }
 
     public static int DropExistingTable(string tableName, SqlConnection connection, SqlTransaction? transaction = null)
     {
-        return ExecuteNonQuery(string.Format("IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'{0}') AND type in (N'U')) DROP TABLE {0}", tableName), connection, transaction);
+        return ExecuteNonQuery($"IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'{tableName}') AND type in (N'U')) DROP TABLE {tableName}", connection, transaction);
     }
 
     public static int RenameTable(string oldName, string newName, SqlConnection connection, SqlTransaction? transaction = null)
